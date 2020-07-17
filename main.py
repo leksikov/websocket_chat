@@ -10,11 +10,18 @@ import aioredis
 
 
 async def close_redis(app):
-    
-
-    
+    print("Closing redis...")
+    await app['redis'].flushdb(async_op=True)
+    app['redis'].close()
     await app['redis'].wait_closed()
     print("redis closed")
+
+async def shutdown(app):
+    for ws in app['websockets'].values():  # cßlose all sockets iteratively
+        await ws.close(code=1000, message='Server shutdown')
+    
+    app['websockets'].clear()
+    
 
 
 async def init_app():
@@ -23,7 +30,8 @@ async def init_app():
     app["redis"] = await aioredis.create_redis_pool('redis://localhost')
 
     app.on_shutdown.append(shutdown)  # Listen the Shutdown event and shutdown the server
-    app.on_shutdown.append(flush_redis) # delete all in memory data    
+    
+    
     app.on_shutdown.append(close_redis) # close redis
 
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates/'))  # at templates there are html pages
@@ -33,12 +41,7 @@ async def init_app():
     return app
 
 
-async def shutdown(app):
-    for ws in app['websockets'].values():  # cßlose all sockets iteratively
-        await ws.close(code=1000, message='Server shutdown')
-    
-    app['websockets'].clear()
-    
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
     app = init_app()  # initiaize app settings

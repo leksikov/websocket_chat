@@ -11,7 +11,7 @@ import aioredis
 
 async def close_redis(app):
     print("Closing redis...")
-    await app['redis'].flushdb(async_op=True)
+    
     app['redis'].close()
     await app['redis'].wait_closed()
     print("redis closed")
@@ -21,6 +21,7 @@ async def shutdown(app):
         await ws.close(code=1000, message='Server shutdown')
     
     app['websockets'].clear()
+    
     
 
 
